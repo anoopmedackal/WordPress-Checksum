@@ -24,7 +24,7 @@ do
         wp core verify-checksums 2>&1 | grep 'File should not exist' | awk '{print $6}'|xargs rm -fv
         echo -e "\e[31mRunning WP checksum\e[0m"
         wp core verify-checksums
-	find . -type f -iname '*.php' -exec chmod 644 {} \;
+	find . -type f -iname '*.php' -exec chmod 644 {} \&
 done
 EOF
 }
@@ -38,7 +38,7 @@ do
         version="$(grep -s '^\$wp_version' "wp-includes/version.php" |cut -d\' -f2)"
         echo -e "\e[31mDownloading WP core files of version $version in $docroot\e[0m"
         wp core download --force --version=$version
-	find . -type f -iname '*.php' -exec chmod 644 {} \;
+	find . -type f -iname '*.php' -exec chmod 644 {} \&
 done
 EOF
 }
