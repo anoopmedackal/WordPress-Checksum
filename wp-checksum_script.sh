@@ -48,10 +48,12 @@ check_wp_installations() {
         output=\$(wp core verify-checksums 2>&1 | grep 'File should not exist' | awk '{print \$6}')
         if [ -n "\$output" ]; then
             echo "\$output" >> /home/$cpuser/wp-checklist.txt
+            echo -e "\e[1;33m\$docroot has WordPress version \$version\e[0m"
+            echo -e "\e[1;32mFiles that are not part of the WP installation are:\e[0m"
+            echo "\$output"
+        else
+            echo -e "\e[1;32mNo unwanted files found in $docroot\e[0m"
         fi
-        echo -e "\e[1;33m\$docroot has WordPress version \$version\e[0m"
-        echo -e "\e[1;32mFiles that are not part of the WP installation are:\e[0m"
-        echo "\$output"
     done
 EOF
 }
