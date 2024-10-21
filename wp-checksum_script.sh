@@ -1,6 +1,6 @@
 #!/bin/bash
 #####################################
-# Script to identify WP installations in a cPanel user, 
+# Script to identify WP installations in a cPanel user,
 # remove unwanted files, and download correct WP core files.
 #####################################
 
@@ -14,7 +14,6 @@ fi
 
 # Function to remove unwanted files and verify WP core checksums
 wp_checksum_with_removal() {
-  local docroot
   for docroot in $(find "/home/$cpuser/" -type d -iname 'wp-content' | xargs dirname); do
     cd "$docroot" || continue
     echo -e "\e[31mRemoving unwanted WP files from $docroot\e[0m"
@@ -27,7 +26,6 @@ wp_checksum_with_removal() {
 
 # Function to download correct WP core files based on version
 wp_checksum() {
-  local docroot version
   for docroot in $(find "/home/$cpuser/" -type d -iname 'wp-content' | xargs dirname); do
     cd "$docroot" || continue
     version=$(grep -s '^\$wp_version' "wp-includes/version.php" | cut -d\' -f2)
@@ -40,7 +38,8 @@ wp_checksum() {
 # Finds WP installations, their versions, and unwanted files
 find_wp_installations() {
   local docroot version output
-  > "/home/$cpuser/wp-checklist.txt" # Initialize wp-checklist.txt
+  wp_checklist="/home/$cpuser/wp-checklist.txt"
+  > "$wp_checklist" # Initialize wp-checklist.txt
   for docroot in $(find "/home/$cpuser/" -type d -iname 'wp-content' | xargs dirname); do
     cd "$docroot" || continue
     version=$(grep -s '^\$wp_version' "wp-includes/version.php" | cut -d\' -f2)
@@ -48,7 +47,7 @@ find_wp_installations() {
     echo -e "\e[1;33m$docroot has WordPress version $version\e[0m"
     if [[ -n "$output" ]]; then
       echo -e "\e[1;32mFiles that are not part of the WP installation are:\e[0m\n$output"
-      echo "$output" >> "/home/$cpuser/wp-checklist.txt"
+      echo "$output" >> "$wp_checklist"
     else
       echo -e "\e[1;32mNo unwanted files found in $docroot\e[0m"
     fi
@@ -56,7 +55,7 @@ find_wp_installations() {
 }
 
 # Execute the function to find WP installations and unwanted files
-su - "$cpuser" -s /bin/bash -c "$(declare -f find_wp_installations); find_wp_installations"
+find_wp_installations
 
 # Check if wp-checklist.txt is not empty and proceed
 if [ -s "/home/$cpuser/wp-checklist.txt" ]; then
@@ -64,9 +63,10 @@ if [ -s "/home/$cpuser/wp-checklist.txt" ]; then
   answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
 
   if [[ $answer == "yes" ]]; then
-    su - "$cpuser" -s /bin/bash -c "$(declare -f wp_checksum_with_removal wp_checksum); wp_checksum_with_removal; wp_checksum"
+    wp_checksum_with_removal
+    wp_checksum
   elif [[ $answer == "no" ]]; then
-    su - "$cpuser" -s /bin/bash -c "$(declare -f wp_checksum); wp_checksum"
+    wp_checksum
   else
     echo "Invalid input. Please enter 'yes' or 'no'."
     exit 1
@@ -74,7 +74,7 @@ if [ -s "/home/$cpuser/wp-checklist.txt" ]; then
 
   rm -f "/home/$cpuser/wp-checklist.txt"
 else
-  su - "$cpuser" -s /bin/bash -c "$(declare -f wp_checksum); wp_checksum"
+  wp_checksum
 fi
 
 exit 0
