@@ -14,6 +14,7 @@ fi
 
 # Function to remove unwanted files and verify WP core checksums
 wp_checksum_with_removal() {
+  su - "$cpuser" -s /bin/bash <<'EOF'
   for docroot in $(find "/home/$cpuser/" -type d -iname 'wp-content' | xargs dirname); do
     cd "$docroot" || continue
     echo -e "\e[31mRemoving unwanted WP files from $docroot\e[0m"
@@ -22,10 +23,12 @@ wp_checksum_with_removal() {
     wp core verify-checksums
     find . -type f -iname '*.php' -exec chmod 644 {} \;
   done
+EOF
 }
 
 # Function to download correct WP core files based on version
 wp_checksum() {
+  su - "$cpuser" -s /bin/bash <<'EOF'
   for docroot in $(find "/home/$cpuser/" -type d -iname 'wp-content' | xargs dirname); do
     cd "$docroot" || continue
     version=$(grep -s '^\$wp_version' "wp-includes/version.php" | cut -d\' -f2)
@@ -33,11 +36,12 @@ wp_checksum() {
     wp core download --force --version="$version"
     find . -type f -iname '*.php' -exec chmod 644 {} \;
   done
+EOF
 }
 
 # Finds WP installations, their versions, and unwanted files
 find_wp_installations() {
-  local docroot version output
+  su - "$cpuser" -s /bin/bash <<'EOF'
   wp_checklist="/home/$cpuser/wp-checklist.txt"
   > "$wp_checklist" # Initialize wp-checklist.txt
   for docroot in $(find "/home/$cpuser/" -type d -iname 'wp-content' | xargs dirname); do
@@ -52,29 +56,32 @@ find_wp_installations() {
       echo -e "\e[1;32mNo unwanted files found in $docroot\e[0m"
     fi
   done
+EOF
 }
 
-# Execute the function to find WP installations and unwanted files
-su - "$cpuser" -s /bin/bash -c "$(declare -f find_wp_installations); find_wp_installations"
-
 # Check if wp-checklist.txt is not empty and proceed
-if [ -s "/home/$cpuser/wp-checklist.txt" ]; then
-  read -p $'\e[1;31mDo you want this script to delete all the files listed above and download WP core files in each WP installation?\e[0m (yes/no): ' answer
-  answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
+check_and_execute() {
+  if [ -s "/home/$cpuser/wp-checklist.txt" ]; then
+    read -p $'\e[1;31mDo you want this script to delete all the files listed above and download WP core files in each WP installation?\e[0m (yes/no): ' answer
+    answer=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
 
-  if [[ $answer == "yes" ]]; then
-    wp_checksum_with_removal
-    wp_checksum
-  elif [[ $answer == "no" ]]; then
-    wp_checksum
+    if [[ $answer == "yes" ]]; then
+      wp_checksum_with_removal
+      wp_checksum
+    elif [[ $answer == "no" ]]; then
+      wp_checksum
+    else
+      echo "Invalid input. Please enter 'yes' or 'no'."
+      exit 1
+    fi
+    rm -f "/home/$cpuser/wp-checklist.txt"
   else
-    echo "Invalid input. Please enter 'yes' or 'no'."
-    exit 1
+    wp_checksum
   fi
+}
 
-  rm -f "/home/$cpuser/wp-checklist.txt"
-else
-  wp_checksum
-fi
+# Main script flow
+find_wp_installations
+check_and_execute
 
 exit 0
