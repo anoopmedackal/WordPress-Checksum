@@ -55,7 +55,7 @@ find_wp_installations() {
 }
 
 # Execute the function to find WP installations and unwanted files
-find_wp_installations
+su - "$cpuser" -s /bin/bash -c "$(declare -f find_wp_installations); find_wp_installations"
 
 # Check if wp-checklist.txt is not empty and proceed
 if [ -s "/home/$cpuser/wp-checklist.txt" ]; then
