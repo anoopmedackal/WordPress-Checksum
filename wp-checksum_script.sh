@@ -20,6 +20,12 @@ wp_checksum_and_remove() {
         echo -e "\e[31mRunning WP checksum\e[0m"
         wp core verify-checksums
         find . -type f -iname '*.php' -exec chmod 644 {} \;
+        wp core update-db
+        wp plugin update --all
+        wp theme update --all
+        wp plugin verify-checksums --all --format=csv | cut -d, -f1|grep -Ev 'Warning:|plugin_name|Error:'|uniq
+        wp user list --role=administrator 
+        wp config shuffle-salts
     done
 EOF
 }
