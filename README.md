@@ -17,4 +17,4 @@ This Bash script is designed to streamline the management of multiple WordPress 
 ### Usage:
 Open your SSH terminal and run the below command as the root user.
 
-`bash <(curl -s https://raw.githubusercontent.com/anoopmedackal/WordPress-Checksum/main/wp-checksum_script.sh)`
+`bash <(curl -s https://raw.githubusercontent.com/anoopmedackal/WordPress-Checksum/main/wp-cleanup.sh)`
