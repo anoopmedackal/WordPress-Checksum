@@ -65,7 +65,7 @@ wp_download_core() {
         wp theme update --all
         
         #Plugins that failed checksum 
-        echo -e "\e[1;33mPlugins that failed checksum in \$docroot\e[0m"
+        echo -e "\e[1;33mBelow plugins failed checksum in \$docroot and need reinstallation\e[0m"
         wp plugin verify-checksums --all --format=csv | grep 'File was added'|cut -d, -f1|uniq
         
         # Removing unwanted plugin files based on checksum results
