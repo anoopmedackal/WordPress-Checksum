@@ -57,28 +57,25 @@ wp_download_core() {
         wp core update-db
         
         # Update all plugins
-        echo -e "\e[1;33mUpdating all installed plugins...\e[0m"
+        echo -e "\e[1;33mUpdating all installed plugins in \$docroot...\e[0m"
         wp plugin update --all
 
         # Update all themes
-        echo -e "\e[1;33mUpdating all installed themes...\e[0m"
+        echo -e "\e[1;33mUpdating all installed themes in \$docroot...\e[0m"
         wp theme update --all
         
-        # Remove unwanted plugin files based on checksum results
-        echo -e "\e[1;33mRemoving unwanted plugin files based on checksum results...\e[0m"
+        #Plugins that failed checksum 
+        echo -e "\e[1;33mPlugins that failed checksum in \$docroot\e[0m"
+        wp plugin verify-checksums --all --format=csv | grep 'File was added'|cut -d, -f1|uniq
+        
+        # Removing unwanted plugin files based on checksum results
+        echo -e "\e[1;33mRemoving unwanted plugin files based on checksum results for \$docroot\e[0m"
         cd wp-content/plugins
-        wp plugin verify-checksums --all --format=csv | grep 'File was added' | sed 's/,/\//; s/,".*"//' | while read -r file; do
-            echo -e "\e[1;32mCapturing metadata before deletion\e[0m"
-            stat "\$file"
-            echo -e "\e[1;32mmd5 checksum\e[0m" 
-            md5sum "\$file"
-            # Remove the unwanted file
-            rm -fv "\$file"
-        done
+        wp plugin verify-checksums --all --format=csv | grep 'File was added' | sed 's/,/\//; s/,".*"//' | xargs rm -fv
         cd -
         
         # List all administrators (to check for any suspicious users)
-        echo -e "\e[1;33mListing all WordPress administrators...\e[0m"
+        echo -e "\e[1;33mListing all WordPress administrators in \$docroot\e[0m"
         wp user list --role=administrator
 
         # Shuffle salts in wp-config for added security
